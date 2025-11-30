@@ -4,9 +4,44 @@ from department import Department
 
 
 class Employee:
-
     # Dictionary of objects saved to the database.
     all = {}
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        if not isinstance(value, str):
+            raise ValueError("Name must be a string")
+        if len(value) == 0:
+            raise ValueError("Name must not be empty")
+        self._name = value
+
+    @property
+    def job_title(self):
+        return self._job_title
+
+    @job_title.setter
+    def job_title(self, value):
+        if not isinstance(value, str):
+            raise ValueError("Job title must be a string")
+        if len(value) == 0:
+            raise ValueError("Job title must not be empty")
+        self._job_title = value
+
+    @property
+    def department_id(self):
+        return self._department_id
+
+    @department_id.setter
+    def department_id(self, value):
+        if not isinstance(value, int):
+            raise ValueError("Department ID must be an integer")
+        if Department.find_by_id(value) is None:
+            raise ValueError("Department ID must reference an existing department")
+        self._department_id = value
 
     def __init__(self, name, job_title, department_id, id=None):
         self.id = id
@@ -16,13 +51,13 @@ class Employee:
 
     def __repr__(self):
         return (
-            f"<Employee {self.id}: {self.name}, {self.job_title}, " +
-            f"Department ID: {self.department_id}>"
+            f"<Employee {self.id}: {self.name}, {self.job_title}, "
+            + f"Department ID: {self.department_id}>"
         )
 
     @classmethod
     def create_table(cls):
-        """ Create a new table to persist the attributes of Employee instances """
+        """Create a new table to persist the attributes of Employee instances"""
         sql = """
             CREATE TABLE IF NOT EXISTS employees (
             id INTEGER PRIMARY KEY,
@@ -36,7 +71,7 @@ class Employee:
 
     @classmethod
     def drop_table(cls):
-        """ Drop the table that persists Employee instances """
+        """Drop the table that persists Employee instances"""
         sql = """
             DROP TABLE IF EXISTS employees;
         """
@@ -44,7 +79,7 @@ class Employee:
         CONN.commit()
 
     def save(self):
-        """ Insert a new row with the name, job title, and department id values of the current Employee object.
+        """Insert a new row with the name, job title, and department id values of the current Employee object.
         Update object id attribute using the primary key value of new row.
         Save the object in local dictionary using table row's PK as dictionary key"""
         sql = """
@@ -65,8 +100,7 @@ class Employee:
             SET name = ?, job_title = ?, department_id = ?
             WHERE id = ?
         """
-        CURSOR.execute(sql, (self.name, self.job_title,
-                             self.department_id, self.id))
+        CURSOR.execute(sql, (self.name, self.job_title, self.department_id, self.id))
         CONN.commit()
 
     def delete(self):
@@ -89,7 +123,7 @@ class Employee:
 
     @classmethod
     def create(cls, name, job_title, department_id):
-        """ Initialize a new Employee instance and save the object to the database """
+        """Initialize a new Employee instance and save the object to the database"""
         employee = cls(name, job_title, department_id)
         employee.save()
         return employee
@@ -102,9 +136,9 @@ class Employee:
         employee = cls.all.get(row[0])
         if employee:
             # ensure attributes match row values in case local instance was modified
-            employee.name = row[1]
-            employee.job_title = row[2]
-            employee.department_id = row[3]
+            employee._name = row[1]
+            employee._job_title = row[2]
+            employee._department_id = row[3]
         else:
             # not in dictionary, create new instance and add to dictionary
             employee = cls(row[1], row[2], row[3])
